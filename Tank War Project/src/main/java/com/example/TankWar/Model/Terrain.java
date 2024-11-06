@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name="terrains")
 public class Terrain {
-		public boolean isHasObstacles() {
+	public boolean isHasObstacles() {
 		return hasObstacles;
 	}
 

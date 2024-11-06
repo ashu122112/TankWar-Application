@@ -90,4 +90,9 @@ public class GameSketch extends PApplet{
 	        // Using the gameService to fire a pro from the current tank
 	        gameService.fireProjectile(currentTank.getPlayerId(), angle, power);
 	    }
+	    
+	    
+	    public GameSketch(GameService gameService) {
+	        this.gameService = gameService;
+	    }
 }

@@ -1,5 +1,6 @@
 package com.example.TankWar.Model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,7 +14,8 @@ public class Weapon {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id;
 	private String type;         
-    private int damage;           
+    private int damage;      
+    @Column(name = "weapon_range")
     private double range;         
     private double weight;        
 
