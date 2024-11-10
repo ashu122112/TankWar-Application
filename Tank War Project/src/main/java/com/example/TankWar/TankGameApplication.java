@@ -13,13 +13,14 @@ import processing.core.PApplet;
 public class TankGameApplication {
 
 	public static void main(String[] args) {
+		System.setProperty("java.awt.headless", "false");
 		SpringApplication.run(TankGameApplication.class, args);
 		
 		 
 	}
-	@Bean
-    public PApplet mainSketch(GameService gameService) {
-        return new GameSketch(gameService);
-    }
+//	@Bean
+//    public PApplet mainSketch(GameService gameService) {
+//        return new GameSketch(gameService);
+//    }
 
 }

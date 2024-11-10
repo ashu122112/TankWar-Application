@@ -40,10 +40,8 @@ public class GameService {
 	        return tankRepository.findAll();
 	    }
 	    
-	    private int currentTankIndex = 0;  // Tracks which tank's turn it is
-
-	    // Other methods like fireProjectile(), getTanks(), getActiveProjectiles(), etc.
-
+	    private int currentTankIndex = 0;  
+	    
 	    public Tank getCurrentTank() {
 	        List<Tank> tanks = tankRepository.findAll();
 
@@ -51,9 +49,9 @@ public class GameService {
 	            throw new IllegalStateException("No tanks available in the game.");
 	        }
 
-	        // Retrieve the current tank and prepare for the next turn
+	        
 	        Tank currentTank = tanks.get(currentTankIndex);
-	        currentTankIndex = (currentTankIndex + 1) % tanks.size();  // Cycle to the next tank
+	        currentTankIndex = (currentTankIndex + 1) % tanks.size();  
 
 	        return currentTank;
 	    }
@@ -62,16 +60,16 @@ public class GameService {
 	        Optional<Tank> tankOpt = tankRepository.findById(tankId);
 	        if (tankOpt.isPresent()) {
 	            Tank tank = tankOpt.get();
-	           
+	           //logic of angle and power?
 	            Projectile projectile = new Projectile();
 	            projectileRepository.save(projectile);
 	            
 	        }
 	    }
 	    public List<Projectile> getActiveProjectiles() {
-	        // Retrieve all projectiles and filter based on an 'isActive' status (boolean attribute)
+	        
 	        return projectileRepository.findAll().stream()
-	                                   .filter(Projectile::isActive) // Assuming 'isActive' indicates active projectiles
+	                                   .filter(Projectile::isActive)
 	                                   .collect(Collectors.toList());
 	    }
 

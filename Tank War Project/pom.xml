@@ -66,6 +66,28 @@
     <version>3.3.7</version>
 </dependency>
 
+
+	<dependency>
+    <groupId>org.json</groupId>
+    <artifactId>json</artifactId>
+    <version>20230618</version>
+</dependency>
+
+	<!-- https://mvnrepository.com/artifact/org.processing/core -->
+<dependency>
+    <groupId>org.processing</groupId>
+    <artifactId>core</artifactId>
+    <version>3.3.7</version>
+</dependency>
+
+
+    <!-- JSON library -->
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20230618</version>
+    </dependency>
+
 	
 	</dependencies>
 
