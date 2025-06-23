@@ -101,23 +101,26 @@ void displayTerrain() {
   if (currentTerrain.equals("grassland")) {
     image(grasslandBg, battlefieldX, battlefieldY, battlefieldWidth, battlefieldHeight);
     if (barriers.isEmpty()) {
-      barriers.add(new Barrier(500, height - 100, 50, 150, barrierGImg));  // ✅ Grass barrier
+      barriers.add(new Barrier(300, height - 150, 50, 150, barrierGImg));
     }
   } else if (currentTerrain.equals("desert")) {
     image(desertBg, battlefieldX, battlefieldY, battlefieldWidth, battlefieldHeight);
     if (barriers.isEmpty()) {
-      barriers.add(new Barrier(500, height - 100, 50, 150, barrierDImg));  // ✅ Desert barrier
+      barriers.add(new Barrier(300, height - 150, 50, 150, barrierDImg));
     }
   } else if (currentTerrain.equals("ice")) {
     image(iceBg, battlefieldX, battlefieldY, battlefieldWidth, battlefieldHeight);
     if (barriers.isEmpty()) {
-      barriers.add(new Barrier(500, height - 100, 50, 150, barrierIImg));  // ✅ Ice barrier
+      barriers.add(new Barrier(300, height - 150, 50, 150, barrierIImg));
     }
   }
 
+  // Battlefield border
   stroke(0);
   strokeWeight(4);
+  noFill();
   rect(battlefieldX, battlefieldY, battlefieldWidth, battlefieldHeight);
+
   noStroke();
 }
 

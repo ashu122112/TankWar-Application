@@ -79,9 +79,16 @@ class Tank {
   }
 
   void display(boolean showExtras) {
-    if (tankImg != null) {
-      image(tankImg, x, y, tankWidth, tankHeight);
-    } 
+     float imgWidth = 60;
+  float imgHeight = 40;
+
+  if (tankImg != null) {
+    image(tankImg, x, y, imgWidth, imgHeight);
+  } else {
+    fill(tankColor);
+    rect(x, y, tankWidth, tankHeight);
+    rect(x + 15, y - 10, 10, 10);
+  }
 
     if (showExtras) {
       fill(100);
@@ -139,16 +146,19 @@ class Tank {
     }
     py = y + tankHeight / 2;
 
-    if (weaponType.equals("bullet")) {
-      projectiles.add(new Projectile(px, py, dx*1.5f, 0, tankColor, 10, 4, "bullet"));
-      fireCooldown = 20;
-    } else if (weaponType.equals("missile")) {
-      projectiles.add(new Projectile(px, py, dx / 2, 0, tankColor, 25, 8, "missile"));
-      fireCooldown = 40;
-    } else if (weaponType.equals("plasma")) {
-      projectiles.add(new Projectile(px, py, dx * 1.2, 0, tankColor, 15, 12, "plasma"));
-      fireCooldown = 30;
-    }
+   if (weaponType.equals("bullet")) {
+    projectiles.add(new Projectile(px, py, dx * 1.5f, 0, tankColor, 10, 4, "bullet"));
+    fireCooldown = 20;
+
+
+} else if (weaponType.equals("missile")) {
+  projectiles.add(new Projectile(px, py, dx, 0, tankColor, 25, 8, "missile"));
+  fireCooldown = 40;
+} else if (weaponType.equals("plasma")) {
+  projectiles.add(new Projectile(px, py, dx * 2, 0, tankColor, 15, 12, "plasma"));
+  fireCooldown = 30;
+}
+
 
     if (tempRapidFire) fireCooldown = 8;
   }
