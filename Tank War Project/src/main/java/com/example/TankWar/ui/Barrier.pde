@@ -51,11 +51,9 @@ class Barrier {
   }
   
   boolean collidesWith(Projectile p) {
-    float closestX = constrain(p.x, x, x + w);
-    float closestY = constrain(p.y, y, y + h);
-    float distance = dist(p.x, p.y, closestX, closestY);
-    return distance < p.radius;
-  }
+  return (p.x + p.radius > x && p.x - p.radius < x + w &&
+          p.y + p.radius > y && p.y - p.radius < y + h);
+}
   
   void takeDamage(float amount) {
     health -= amount;

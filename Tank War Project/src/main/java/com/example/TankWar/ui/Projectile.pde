@@ -83,10 +83,11 @@ class Projectile {
   }
   
   boolean hits(Tank tank) {
-    float closestX = constrain(x, tank.x, tank.x + tank.tankWidth);
-    float closestY = constrain(y, tank.y, tank.y + tank.tankHeight);
-    float distance = dist(x, y, closestX, closestY);
-    return distance < radius + tank.tankWidth/2;
+    // Improved collision detection using distance-based check
+    float tankCenterX = tank.x + tank.tankWidth/2;
+    float tankCenterY = tank.y + tank.tankHeight/2;
+    float distance = dist(x, y, tankCenterX, tankCenterY);
+    return distance < (radius + tank.tankWidth/2);
   }
   
   void display() {

@@ -4,6 +4,7 @@ ArrayList<Projectile> projectiles = new ArrayList<Projectile>();
 ArrayList<Barrier> barriers = new ArrayList<Barrier>();
 ArrayList<PowerUp> powerUps = new ArrayList<PowerUp>();
 ArrayList<Particle> particles = new ArrayList<Particle>();
+ArrayList<Timer> timers = new ArrayList<Timer>();
 
 String currentTerrain = "";
 boolean terrainSelected = false;
@@ -177,68 +178,33 @@ void displayTerrain() {
 void updateGameObjects() {
   // Update tanks
   tank1.update(barriers, tank2);
-  tank2.update(barriers, tank1);
+tank2.update(barriers, tank1);
   
   // Update projectiles
-  for (int i = projectiles.size() - 1; i >= 0; i--) {
+  for (int i = projectiles.size()-1; i >= 0; i--) {
     Projectile p = projectiles.get(i);
     p.update();
     
-    // Check collisions
-    if (p.hits(tank1)) {
-      tank1.takeDamage(p.damage);
-      createExplosion(p.x, p.y, p.radius * 2);
-      projectiles.remove(i);
-    } 
-    else if (p.hits(tank2)) {
-      tank2.takeDamage(p.damage);
-      createExplosion(p.x, p.y, p.radius * 2);
-      projectiles.remove(i);
-    }
-    else if (!p.alive) {
+    if (!p.alive) {
       projectiles.remove(i);
     }
   }
   
-  // Update barriers
-  for (int i = barriers.size() - 1; i >= 0; i--) {
-    if (barriers.get(i).isDestroyed()) {
-      barriers.remove(i);
-    }
+  for (int i = timers.size() - 1; i >= 0; i--) {
+  timers.get(i).update();
+  if (timers.get(i).isDone()) {
+    timers.remove(i);
   }
-  
-  // Update powerups
-  for (int i = powerUps.size()-1; i >= 0; i--) {
-    PowerUp p = powerUps.get(i);
-    if (p.isCollectedBy(tank1)) {
-      tank1.applyPowerUp(p);
-      powerUps.remove(i);
-    } 
-    else if (p.isCollectedBy(tank2)) {
-      tank2.applyPowerUp(p);
-      powerUps.remove(i);
-    }
-  }
-  
-  // Update particles
-  for (int i = particles.size() - 1; i >= 0; i--) {
-    Particle pt = particles.get(i);
-    pt.update();
-    if (!pt.alive) {
-      particles.remove(i);
-    }
-  }
+}
   
   // Game over check
   if (tank1.health <= 0) {
-    gameOver = true;
-    winnerMessage = "PLAYER 2 WINS!";
-  } else if (tank2.health <= 0) {
-    gameOver = true;
-    winnerMessage = "PLAYER 1 WINS!";
+    gameOver("PLAYER 2 WINS!");
+  } 
+  else if (tank2.health <= 0) {
+    gameOver("PLAYER 1 WINS!");
   }
 }
-
 
 void drawUI() {
   drawBattlefield();
@@ -250,8 +216,8 @@ void drawUI() {
   for (PowerUp p : powerUps) p.display();
   for (Particle p : particles) p.display();
   
-  tank1.display(false);
-  tank2.display(false);
+  tank1.display(true);  // true to show health bars
+tank2.display(true);
 }
 
 void drawBattlefield() {
@@ -394,37 +360,50 @@ void drawGradientBackground(color c1, color c2) {
 }
 
 void keyPressed() {
-  if (gameOver && (key == 'r' || key == 'R')) {
-    resetGame();
-    return;
-  }
-  
   if (!terrainSelected) {
     handleTerrainSelection();
     return;
   }
 
   if (!countdownOver) return;
+
+  // Player 1 controls
+  if (key == 'w' || key == 'W') tank1.movingUp = true;
+  if (key == 's' || key == 'S') tank1.movingDown = true;
+  if (key == 'a' || key == 'A') tank1.movingLeft = true;
+  if (key == 'd' || key == 'D') tank1.movingRight = true;
+  if (key == ' ') tank1.fire();
+  if (key == 'q' || key == 'Q') tank1.selectedWeapon = (tank1.selectedWeapon + 1) % 3;
   
-  // Handle movement keys
-  tank1.handleKeyPressed(key, true);
-  tank2.handleKeyPressed(key, true);
+  // Player 2 controls
+  if (keyCode == UP) tank2.movingUp = true;
+  if (keyCode == DOWN) tank2.movingDown = true;
+  if (keyCode == LEFT) tank2.movingLeft = true;
+  if (keyCode == RIGHT) tank2.movingRight = true;
+  if (key == 'l' || key == 'L') tank2.fire();
+  if (key == 'k' || key == 'K') tank2.selectedWeapon = (tank2.selectedWeapon + 1) % 3;
   
   // Direct weapon selection
   if (key == '1') tank1.selectedWeapon = 0;
-  else if (key == '2') tank1.selectedWeapon = 1;
-  else if (key == '3') tank1.selectedWeapon = 2;
-  
+  if (key == '2') tank1.selectedWeapon = 1;
+  if (key == '3') tank1.selectedWeapon = 2;
   if (key == '8') tank2.selectedWeapon = 0;
-  else if (key == '9') tank2.selectedWeapon = 1;
-  else if (key == '0') tank2.selectedWeapon = 2;
+  if (key == '9') tank2.selectedWeapon = 1;
+  if (key == '0') tank2.selectedWeapon = 2;
 }
 
 void keyReleased() {
-  if (countdownOver) {
-    tank1.handleKeyPressed(key, false);
-    tank2.handleKeyPressed(key, false);
-  }
+  // Player 1 controls
+  if (key == 'w' || key == 'W') tank1.movingUp = false;
+  if (key == 's' || key == 'S') tank1.movingDown = false;
+  if (key == 'a' || key == 'A') tank1.movingLeft = false;
+  if (key == 'd' || key == 'D') tank1.movingRight = false;
+  
+  // Player 2 controls
+  if (keyCode == UP) tank2.movingUp = false;
+  if (keyCode == DOWN) tank2.movingDown = false;
+  if (keyCode == LEFT) tank2.movingLeft = false;
+  if (keyCode == RIGHT) tank2.movingRight = false;
 }
 
 void handleTerrainSelection() {
@@ -466,4 +445,20 @@ void resetGame() {
   countdownStarted = false;
   countdownOver = false;
   countdownStartTime = millis();
+}
+
+void gameOver(String message) {
+  gameOver = true;
+  winnerMessage = message;
+  
+  // Display game over screen
+  fill(0, 180);
+  rect(0, 0, width, height);
+  fill(255);
+  textSize(50);
+  textAlign(CENTER, CENTER);
+  text(message, width/2, height/2);
+  
+  textSize(24);
+  text("Press R to Restart", width/2, height/2 + 60);
 }
