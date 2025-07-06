@@ -1,3 +1,5 @@
+// Projectile.pde - Class definition
+
 class Projectile {
   float x, y;
   float dx, dy;
@@ -6,15 +8,12 @@ class Projectile {
   float radius;
   boolean alive = true;
   String type;
-  int lifespan = 1000;
+  int lifespan = 3000; // Increased lifespan for longer range
   int creationTime;
   Tank target = null;
   float homingStrength = 0.05;
 
-  // Add a reference to the main game sketch (or specific lists) to allow adding particles/explosions
-  // A cleaner approach is to have updateGameObjects handle particle creation on projectile death
-  // For now, we'll keep createExplosion as a global function that adds to 'particles' list
-
+  // Constructor
   Projectile(float x, float y, float dx, float dy, color c,
              float damage, float radius, String type) {
     this.x = x;
@@ -28,6 +27,7 @@ class Projectile {
     this.creationTime = millis();
 
     // Determine target for homing missile based on projectile's color (i.e., who shot it)
+    // Assumes tank1 and tank2 are global variables from GameSketch.pde
     if (type.equals("missile")) {
       target = (c == tank1.tankColor) ? tank2 : tank1; // Assign the opponent as target
     }
@@ -43,6 +43,7 @@ class Projectile {
       float angleToTarget = atan2(target.y + target.tankHeight/2 - y,
                                   target.x + target.tankWidth/2 - x);
       // Gradually adjust direction towards target
+      // The '5' here should ideally be the projectile's max speed.
       dx = lerp(dx, cos(angleToTarget) * 5, homingStrength);
       dy = lerp(dy, sin(angleToTarget) * 5, homingStrength);
     } else if (type.equals("plasma")) {
@@ -58,7 +59,7 @@ class Projectile {
     // Check collisions
     checkCollisions();
 
-    // Boundary check (adjust to use battlefield boundaries)
+    // Boundary check (adjust to use battlefield boundaries defined in GameSketch.pde)
     if (x < battlefieldX || x > battlefieldX + battlefieldWidth ||
         y < battlefieldY || y > battlefieldY + battlefieldHeight) {
       alive = false;
@@ -67,9 +68,11 @@ class Projectile {
 
   void checkCollisions() {
     // Barrier collision
+    // Assumes 'barriers' is a global ArrayList<Barrier> from GameSketch.pde
     for (Barrier b : barriers) {
       if (b.collidesWith(this)) {
         b.takeDamage(damage);
+        // Assumes 'createExplosion' is a global function from GameSketch.pde
         createExplosion(x, y, radius * 2); // Create explosion on barrier hit
         alive = false;
         return;
@@ -77,6 +80,7 @@ class Projectile {
     }
 
     // Tank collision - ensure projectile doesn't hit its own tank
+    // Assumes tank1 and tank2 are global variables from GameSketch.pde
     if (pColor != tank1.tankColor && hits(tank1)) {
       tank1.takeDamage(damage);
       createExplosion(x, y, radius * 2); // Create explosion on tank hit
@@ -94,7 +98,6 @@ class Projectile {
 
   boolean hits(Tank tank) {
     // Improved collision detection using distance-based check
-    // Consider tank's actual bounding box for more accuracy instead of just center
     // This is an AABB (Axis-Aligned Bounding Box) check against a circle (projectile)
     float closestX = constrain(x, tank.x, tank.x + tank.tankWidth);
     float closestY = constrain(y, tank.y, tank.y + tank.tankHeight);
@@ -108,6 +111,7 @@ class Projectile {
     pushMatrix();
     translate(x, y);
 
+    // Assumes bulletImg, missileImg, plasmaImg are global PImage variables from GameSketch.pde
     switch(type) {
       case "bullet":
         imageMode(CENTER);
