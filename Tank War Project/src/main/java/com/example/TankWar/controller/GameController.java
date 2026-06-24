@@ -1,6 +1,8 @@
 package com.example.TankWar.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,5 +70,20 @@ public class GameController {
     public Weapon chooseWeapon(@RequestParam String type) {
         return gameService.chooseWeapon(type);
     }
-	
+
+    @GetMapping("/challenge/random")
+    public GameService.HackChallenge getRandomChallenge() {
+        return gameService.getRandomChallenge();
+    }
+
+    @PostMapping("/challenge/verify")
+    public Map<String, Object> verifyChallenge(
+            @RequestParam int index,
+            @RequestParam String answer) {
+        boolean correct = gameService.verifyAnswer(index, answer);
+        Map<String, Object> result = new HashMap<>();
+        result.put("correct", correct);
+        result.put("reward", correct ? gameService.getChallengeReward(index) : null);
+        return result;
+    }
 }

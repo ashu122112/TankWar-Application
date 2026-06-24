@@ -106,4 +106,63 @@ public class GameService {
 	                .orElse(null);
 	    }
 
+	    public static class HackChallenge {
+	        public final String title;
+	        public final String description;
+	        public final String hint;
+	        public final String answer;
+	        public final String reward;
+
+	        public HackChallenge(String title, String description,
+	                             String hint, String answer, String reward) {
+	            this.title = title;
+	            this.description = description;
+	            this.hint = hint;
+	            this.answer = answer;
+	            this.reward = reward;
+	        }
+	    }
+
+	    private final List<HackChallenge> challengeBank = List.of(
+	        new HackChallenge("SQL LOGIN BYPASS",
+	            "SELECT * FROM users WHERE name='{input}' AND pass='x'",
+	            "Comment out the password check",
+	            "admin'--", "missile_burst"),
+
+	        new HackChallenge("BASE64 DECODE",
+	            "Decode: U0hJRUxE",
+	            "Standard Base64 encoding",
+	            "SHIELD", "shield"),
+
+	        new HackChallenge("XSS INJECTION",
+	            "Inject into: <input value='{input}'>",
+	            "Break out of the attribute",
+	            "'><script>alert(1)</script>", "rapid_fire"),
+
+	        new HackChallenge("CAESAR CIPHER",
+	            "Decode (shift 3): VSRBS",
+	            "Each letter shifted back by 3",
+	            "SPEED", "speed"),
+
+	        new HackChallenge("COMMAND INJECTION",
+	            "ping tool runs: ping {input}",
+	            "Chain a second command with semicolon",
+	            "127.0.0.1; ls", "triple_shot")
+	    );
+
+	    public HackChallenge getRandomChallenge() {
+	        int idx = (int)(Math.random() * challengeBank.size());
+	        return challengeBank.get(idx);
+	    }
+
+	    public boolean verifyAnswer(int challengeIndex, String userAnswer) {
+	        if (challengeIndex < 0 || challengeIndex >= challengeBank.size()) return false;
+	        return challengeBank.get(challengeIndex).answer
+	                   .trim().equalsIgnoreCase(userAnswer.trim());
+	    }
+
+	    public String getChallengeReward(int challengeIndex) {
+	        if (challengeIndex < 0 || challengeIndex >= challengeBank.size()) return null;
+	        return challengeBank.get(challengeIndex).reward;
+	    }
 }

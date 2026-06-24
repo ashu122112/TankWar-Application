@@ -24,6 +24,8 @@ class Tank {
   boolean hasShield = false;
   float speedBoost = 1.0;
   float rapidFire = 1.0;
+  boolean hackMissileBurst = false;
+  boolean hackTripleShot = false;
 
   // Movement flags - controlled by handleKeyPressed/keyReleased
   boolean movingUp = false;
@@ -390,6 +392,34 @@ class Tank {
 
     // Add the new projectile to the global projectiles list (managed in GameSketch)
     projectiles.add(new Projectile(projStartX, projStartY, dx, dy, tankColor, damage, radius, weaponType));
+
+    if (hackMissileBurst) {
+      // Fire 2 extra homing missiles at slight angle offsets
+      float burst1X = x + tankWidth/2 + cos(tankRotationAngle + 0.2) * (tankWidth/2 + 5);
+      float burst1Y = y + tankHeight/2 + sin(tankRotationAngle + 0.2) * (tankHeight/2 + 5);
+      projectiles.add(new Projectile(burst1X, burst1Y,
+        cos(tankRotationAngle + 0.2) * 8, sin(tankRotationAngle + 0.2) * 8,
+        tankColor, 15, 10, "missile"));
+
+      float burst2X = x + tankWidth/2 + cos(tankRotationAngle - 0.2) * (tankWidth/2 + 5);
+      float burst2Y = y + tankHeight/2 + sin(tankRotationAngle - 0.2) * (tankHeight/2 + 5);
+      projectiles.add(new Projectile(burst2X, burst2Y,
+        cos(tankRotationAngle - 0.2) * 8, sin(tankRotationAngle - 0.2) * 8,
+        tankColor, 15, 10, "missile"));
+    }
+
+    if (hackTripleShot) {
+      // Fire 2 extra bullets in spread pattern
+      projectiles.add(new Projectile(
+        projStartX, projStartY,
+        cos(tankRotationAngle + 0.3) * 8, sin(tankRotationAngle + 0.3) * 8,
+        tankColor, damage, radius, "bullet"));
+      projectiles.add(new Projectile(
+        projStartX, projStartY,
+        cos(tankRotationAngle - 0.3) * 8, sin(tankRotationAngle - 0.3) * 8,
+        tankColor, damage, radius, "bullet"));
+    }
+
     fireSound.trigger(); // Play fire sound effect
     // Apply rapid fire power-up effect to the cooldown
     fireCooldown = (int)(cooldown / rapidFire);

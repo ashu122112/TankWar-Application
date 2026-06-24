@@ -18,6 +18,7 @@ class PowerUp {
     else if (type.equals("shield")) c = color(0, 200, 255); // Light blue for shield
     else if (type.equals("speed")) c = color(255, 200, 0); // Orange/Yellow for speed
     else if (type.equals("rapid")) c = color(255, 0, 200); // Pink/Magenta for rapid fire
+    else if (type.equals("hack")) c = color(0, 255, 100); // Neon green for hack
   }
   
   // Method to display the power-up
@@ -39,6 +40,11 @@ class PowerUp {
     else if (type.equals("shield")) text("S", x, y);
     else if (type.equals("speed")) text("Sp", x, y);
     else if (type.equals("rapid")) text("R", x, y);
+    else if (type.equals("hack")) {
+      fill(0, 255, 100);
+      textSize(9);
+      text(">_", x, y);
+    }
   }
   
   // Corrected method to check if the power-up is collected by a tank

@@ -189,7 +189,7 @@ void spawnPowerUps() {
   for (int i = 0; i < 4; i++) { // Spawn 4 power-ups
     float px = random(battlefieldX + 50, battlefieldX + battlefieldWidth - 50);
     float py = random(battlefieldY + 50, battlefieldY + battlefieldHeight - 50);
-    String[] types = {"health", "shield", "speed", "rapid"};
+    String[] types = {"health", "shield", "speed", "rapid", "hack", "hack"};
     powerUps.add(new PowerUp(px, py, types[(int)random(types.length)]));
   }
 }
@@ -224,6 +224,11 @@ void draw() {
       backgroundMusic.pause(); // Stop music on game over
       backgroundMusic.rewind();
     }
+    return;
+  } else if (gameState.equals("hacking")) {
+    displayTerrain();         // show the battlefield behind the panel
+    drawGameObjects();        // tanks still visible
+    drawHackChallenge();      // overlay the challenge panel
     return;
   }
 
@@ -433,11 +438,31 @@ void updateGameObjects() {
   for (int i = powerUps.size() - 1; i >= 0; i--) {
     PowerUp p = powerUps.get(i);
     if (p.isCollectedBy(tank1)) {
-      tank1.applyPowerUp(p);
-      powerUps.remove(i);
-    } else if (p.isCollectedBy(tank2)) {
-      tank2.applyPowerUp(p);
-      powerUps.remove(i);
+      if (p.type.equals("hack")) {
+        powerUps.remove(i);
+        startHackChallenge(tank1);    // ← pause + show challenge
+      } else {
+        tank1.applyPowerUp(p);
+        powerUps.remove(i);
+      }
+    } else if (p.isCollectedBy(tank2) && !isVsComputer) {
+      // Only human player 2 gets hack challenges; AI skips them
+      if (p.type.equals("hack")) {
+        powerUps.remove(i);
+        startHackChallenge(tank2);
+      } else {
+        tank2.applyPowerUp(p);
+        powerUps.remove(i);
+      }
+    } else if (p.isCollectedBy(tank2) && isVsComputer) {
+      // AI just gets a normal random buff instead of hack challenge
+      if (p.type.equals("hack")) {
+        tank2.hasShield = true;       // AI auto-gets shield (fair compromise)
+        powerUps.remove(i);
+      } else {
+        tank2.applyPowerUp(p);
+        powerUps.remove(i);
+      }
     }
   }
 
@@ -547,6 +572,22 @@ void drawGradientBackground(color c1, color c2) {
 
 void keyPressed() {
   println("keyPressed: " + key + " (keyCode: " + keyCode + ")"); // Debugging
+
+  if (gameState.equals("hacking")) {
+    if (key == ENTER || key == RETURN) {
+      checkHackAnswer();
+    } else if (key == ESC) {
+      key = 0;                // suppress Processing's default ESC = quit
+      endHackChallenge();
+    } else if (key == BACKSPACE) {
+      if (hackInput.length() > 0)
+        hackInput = hackInput.substring(0, hackInput.length() - 1);
+    } else if (key != CODED && hackInput.length() < 40) {
+      hackInput += key;       // append typed character
+    }
+    return;                   // block all other input during hack
+  }
+
   if (gameState.equals("mode_selection")) {
     if (key == 'p' || key == 'P') {
       isVsComputer = false;
