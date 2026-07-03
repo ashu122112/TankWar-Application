@@ -1,16 +1,18 @@
 package com.example.TankWar.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.TankWar.Model.GameResult;
 import com.example.TankWar.Model.Projectile;
 import com.example.TankWar.Model.Tank;
 import com.example.TankWar.Model.Terrain;
 import com.example.TankWar.Model.Weapon;
+import com.example.TankWar.repository.GameResultRepository;
 import com.example.TankWar.repository.ProjectileRepository;
 import com.example.TankWar.repository.TankRepository;
 import com.example.TankWar.repository.TerrainRepository;
@@ -18,151 +20,233 @@ import com.example.TankWar.repository.WeaponRepository;
 
 @Service
 public class GameService {
-	 @Autowired
-	    private TankRepository tankRepository;
 
-	    @Autowired
-	    private ProjectileRepository projectileRepository;
+	@Autowired
+	private TankRepository tankRepository;
+	@Autowired
+	private ProjectileRepository projectileRepository;
+	@Autowired
+	private TerrainRepository terrainRepository;
+	@Autowired
+	private WeaponRepository weaponRepository;
+	@Autowired
+	private GameResultRepository gameResultRepository;
 
-	    @Autowired
-	    private TerrainRepository terrainRepository;
+	// ── TURN TRACKING ──────────────────────────────────────────────────────────
+	// volatile ensures visibility across threads (Processing runs on its own
+	// thread)
+	private volatile int currentTankIndex = 0;
 
-	    @Autowired
-	    private WeaponRepository weaponRepository;
+	// ── HACK CHALLENGE BANK ────────────────────────────────────────────────────
+	// Hardcoded here so no extra DB table is needed.
+	// Adding new challenges = adding one entry to this list. Nothing else changes.
+	public static class HackChallenge {
+		public final int index;
+		public final String title;
+		public final String description;
+		public final String hint;
+		private final String answer; // kept private — never sent to client
+		public final String reward;
 
-	    
-	    public void startNewGame() {
-	       
-	    }
+		public HackChallenge(int index, String title, String description,
+				String hint, String answer, String reward) {
+			this.index = index;
+			this.title = title;
+			this.description = description;
+			this.hint = hint;
+			this.answer = answer;
+			this.reward = reward;
+		}
+	}
 
-	    
-	    public List<Tank> getAllTanks() {
-	        return tankRepository.findAll();
-	    }
-	    
-	    private int currentTankIndex = 0;  
-	    
-	    public Tank getCurrentTank() {
-	        List<Tank> tanks = tankRepository.findAll();
+	private final List<HackChallenge> challengeBank = List.of(
+			new HackChallenge(0,
+					"SQL LOGIN BYPASS",
+					"Query: SELECT * FROM users WHERE name='{input}' AND pass='x'",
+					"Comment out the password check with --",
+					"admin'--",
+					"missile_burst"),
 
-	        if (tanks.isEmpty()) {
-	            throw new IllegalStateException("No tanks available in the game.");
-	        }
+			new HackChallenge(1,
+					"BASE64 DECODE",
+					"Decode this string: U0hJRUxE",
+					"Standard Base64 encoding — try any online decoder",
+					"SHIELD",
+					"shield"),
 
-	        
-	        Tank currentTank = tanks.get(currentTankIndex);
-	        currentTankIndex = (currentTankIndex + 1) % tanks.size();  
+			new HackChallenge(2,
+					"XSS INJECTION",
+					"Inject into: <input value='{input}'>",
+					"Break out of the attribute with a closing quote",
+					"'><script>alert(1)</script>",
+					"rapid_fire"),
 
-	        return currentTank;
-	    }
-	  
-	    public void fireProjectile(int tankId, double angle, double power) {
-	        Optional<Tank> tankOpt = tankRepository.findById(tankId);
-	        if (tankOpt.isPresent()) {
-	            Tank tank = tankOpt.get();
-	           //logic of angle and power?
-	            Projectile projectile = new Projectile();
-	            projectileRepository.save(projectile);
-	            
-	        }
-	    }
-	    public List<Projectile> getActiveProjectiles() {
-	        
-	        return projectileRepository.findAll().stream()
-	                                   .filter(Projectile::isActive)
-	                                   .collect(Collectors.toList());
-	    }
+			new HackChallenge(3,
+					"CAESAR CIPHER",
+					"Decode (shift 3): VSRBS",
+					"Shift each letter back by 3 in the alphabet",
+					"SPEED",
+					"speed"),
 
-	    
-	    public void applyDamage(int tankId, int damage) {
-	        Optional<Tank> tankOpt = tankRepository.findById(tankId);
-	        if (tankOpt.isPresent()) {
-	            Tank tank = tankOpt.get();
-	            int newHealth = tank.getHealth() - damage;
-	            tank.setHealth(Math.max(newHealth, 0));
-	            tankRepository.save(tank);
-	        }
-	    }
+			new HackChallenge(4,
+					"COMMAND INJECTION",
+					"Ping tool runs: ping {input}",
+					"Chain a second shell command using a semicolon",
+					"127.0.0.1; ls",
+					"triple_shot"));
 
-	    
-	    public boolean isGameOver() {
-	        List<Tank> tanks = tankRepository.findAll();
-	        return tanks.stream().anyMatch(tank -> tank.getHealth() <= 0);
-	    }
+	// ── GAME LIFECYCLE ─────────────────────────────────────────────────────────
 
-	    
-	    public Terrain getTerrainByType(String type) {
-	        return terrainRepository.findAll().stream()
-	                .filter(terrain -> terrain.getType().equals(type))
-	                .findFirst()
-	                .orElse(null);
-	    }
+	/**
+	 * Clears previous game data and seeds two fresh tanks.
+	 * Called by the REST endpoint and also by GameSketch at game start.
+	 */
+	public void startNewGame() {
+		projectileRepository.deleteAll();
+		tankRepository.deleteAll();
 
-	    
-	    public Weapon chooseWeapon(String type) {
-	        return weaponRepository.findAll().stream()
-	                .filter(weapon -> weapon.getType().equals(type))
-	                .findFirst()
-	                .orElse(null);
-	    }
+		Tank tank1 = new Tank(0, 100, 100.0, 300.0, 0.0, 50.0, "bullet");
+		Tank tank2 = new Tank(0, 100, 600.0, 300.0, 180.0, 50.0, "bullet");
+		tankRepository.saveAll(List.of(tank1, tank2));
 
-	    public static class HackChallenge {
-	        public final String title;
-	        public final String description;
-	        public final String hint;
-	        public final String answer;
-	        public final String reward;
+		currentTankIndex = 0;
+	}
 
-	        public HackChallenge(String title, String description,
-	                             String hint, String answer, String reward) {
-	            this.title = title;
-	            this.description = description;
-	            this.hint = hint;
-	            this.answer = answer;
-	            this.reward = reward;
-	        }
-	    }
+	// ── TANKS ──────────────────────────────────────────────────────────────────
 
-	    private final List<HackChallenge> challengeBank = List.of(
-	        new HackChallenge("SQL LOGIN BYPASS",
-	            "SELECT * FROM users WHERE name='{input}' AND pass='x'",
-	            "Comment out the password check",
-	            "admin'--", "missile_burst"),
+	public List<Tank> getAllTanks() {
+		return tankRepository.findAll();
+	}
 
-	        new HackChallenge("BASE64 DECODE",
-	            "Decode: U0hJRUxE",
-	            "Standard Base64 encoding",
-	            "SHIELD", "shield"),
+	public Tank getCurrentTank() {
+		List<Tank> tanks = tankRepository.findAll();
+		if (tanks.isEmpty()) {
+			throw new IllegalStateException("No tanks in game. Call /api/game/start first.");
+		}
+		Tank current = tanks.get(currentTankIndex % tanks.size());
+		currentTankIndex = (currentTankIndex + 1) % tanks.size();
+		return current;
+	}
 
-	        new HackChallenge("XSS INJECTION",
-	            "Inject into: <input value='{input}'>",
-	            "Break out of the attribute",
-	            "'><script>alert(1)</script>", "rapid_fire"),
+	// ── COMBAT ────────────────────────────────────────────────────────────────
 
-	        new HackChallenge("CAESAR CIPHER",
-	            "Decode (shift 3): VSRBS",
-	            "Each letter shifted back by 3",
-	            "SPEED", "speed"),
+	/**
+	 * Records a fired projectile to the database.
+	 * Previously saved an empty Projectile() — now saves real data.
+	 */
+	public void fireProjectile(int tankId, double angle, double power) {
+		Tank tank = tankRepository.findById(tankId)
+				.orElseThrow(() -> new IllegalArgumentException("Tank not found: " + tankId));
 
-	        new HackChallenge("COMMAND INJECTION",
-	            "ping tool runs: ping {input}",
-	            "Chain a second command with semicolon",
-	            "127.0.0.1; ls", "triple_shot")
-	    );
+		// Sync tank's latest angle/power from the live game into the DB
+		tank.setAngle(angle);
+		tank.setPower(power);
+		tankRepository.save(tank);
 
-	    public HackChallenge getRandomChallenge() {
-	        int idx = (int)(Math.random() * challengeBank.size());
-	        return challengeBank.get(idx);
-	    }
+		// Persist the projectile with real values
+		Projectile projectile = new Projectile(angle, power, tank.getWeaponType());
+		projectile.setPositionX(tank.getPositionX());
+		projectile.setPositionY(tank.getPositionY());
+		projectile.setActive(true);
+		projectileRepository.save(projectile);
+	}
 
-	    public boolean verifyAnswer(int challengeIndex, String userAnswer) {
-	        if (challengeIndex < 0 || challengeIndex >= challengeBank.size()) return false;
-	        return challengeBank.get(challengeIndex).answer
-	                   .trim().equalsIgnoreCase(userAnswer.trim());
-	    }
+	public List<Projectile> getActiveProjectiles() {
+		return projectileRepository.findAll().stream()
+				.filter(Projectile::isActive)
+				.collect(Collectors.toList());
+	}
 
-	    public String getChallengeReward(int challengeIndex) {
-	        if (challengeIndex < 0 || challengeIndex >= challengeBank.size()) return null;
-	        return challengeBank.get(challengeIndex).reward;
-	    }
+	/**
+	 * Applies damage to a tank and saves updated health to the database.
+	 * Called from GameSketch when a projectile hits.
+	 */
+	public void applyDamage(int tankId, int damage) {
+		Tank tank = tankRepository.findById(tankId)
+				.orElseThrow(() -> new IllegalArgumentException("Tank not found: " + tankId));
+		tank.takeDamage(damage);
+		tankRepository.save(tank);
+	}
+
+	// ── GAME OVER & LEADERBOARD ───────────────────────────────────────────────
+
+	public boolean isGameOver() {
+		return tankRepository.findAll().stream()
+				.anyMatch(tank -> tank.getHealth() <= 0);
+	}
+
+	/**
+	 * Saves match result to the leaderboard when game ends.
+	 * Called from GameSketch after the winning condition is detected.
+	 *
+	 * @param winnerName  display name of the winner
+	 * @param loserName   display name of the loser
+	 * @param damageDealt total damage the winner dealt
+	 * @param terrain     terrain type used in this match
+	 * @param usedHack    true if a hack challenge was completed in this match
+	 */
+	public GameResult saveGameResult(String winnerName, String loserName,
+			int damageDealt, String terrain,
+			boolean usedHack) {
+		GameResult result = new GameResult();
+		result.setWinnerName(winnerName);
+		result.setLoserName(loserName);
+		result.setWinnerDamageDealt(damageDealt);
+		result.setTerrainType(terrain);
+		result.setCybersecurityChallengeUsed(usedHack);
+		result.setPlayedAt(LocalDateTime.now());
+		return gameResultRepository.save(result);
+	}
+
+	public List<GameResult> getLeaderboard() {
+		// Returns matches sorted by damage dealt descending
+		return gameResultRepository.findAll().stream()
+				.sorted((a, b) -> b.getWinnerDamageDealt() - a.getWinnerDamageDealt())
+				.collect(Collectors.toList());
+	}
+
+	// ── TERRAIN & WEAPON ──────────────────────────────────────────────────────
+
+	public Terrain getTerrainByType(String type) {
+		return terrainRepository.findAll().stream()
+				.filter(t -> t.getType().equalsIgnoreCase(type))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Unknown terrain: " + type));
+	}
+
+	public Weapon chooseWeapon(String type) {
+		return weaponRepository.findAll().stream()
+				.filter(w -> w.getType().equalsIgnoreCase(type))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Unknown weapon: " + type));
+	}
+
+	// ── HACK CHALLENGES ───────────────────────────────────────────────────────
+
+	public HackChallenge getRandomChallenge() {
+		int idx = (int) (Math.random() * challengeBank.size());
+		return challengeBank.get(idx);
+	}
+
+	public HackChallenge getChallengeByIndex(int index) {
+		if (index < 0 || index >= challengeBank.size()) {
+			throw new IllegalArgumentException("Challenge index out of range: " + index);
+		}
+		return challengeBank.get(index);
+	}
+
+	/**
+	 * Verifies a player's answer against the stored answer (case-insensitive,
+	 * trimmed).
+	 * The correct answer is never exposed to the client — only this method checks
+	 * it.
+	 */
+	public boolean verifyAnswer(int challengeIndex, String userAnswer) {
+		HackChallenge challenge = getChallengeByIndex(challengeIndex);
+		return challenge.answer.trim().equalsIgnoreCase(userAnswer.trim());
+	}
+
+	public String getChallengeReward(int challengeIndex) {
+		return getChallengeByIndex(challengeIndex).reward;
+	}
 }

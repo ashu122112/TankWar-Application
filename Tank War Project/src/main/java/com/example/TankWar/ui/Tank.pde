@@ -421,6 +421,13 @@ class Tank {
     }
 
     fireSound.trigger(); // Play fire sound effect
+    
+    if (isPlayer1) {
+      postToBackend("tanks/1/fire", "angle=" + (int)tankRotationAngle + "&power=50");
+    } else {
+      postToBackend("tanks/2/fire", "angle=" + (int)tankRotationAngle + "&power=50");
+    }
+    
     // Apply rapid fire power-up effect to the cooldown
     fireCooldown = (int)(cooldown / rapidFire);
   }

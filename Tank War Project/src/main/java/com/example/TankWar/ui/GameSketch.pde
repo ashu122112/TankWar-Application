@@ -1,5 +1,27 @@
 // GameSketch.pde - Final Version with Improved Layouts and Fixes
 import ddf.minim.*; // Import the Minim library for audio
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+// Sends a POST request to the Spring Boot backend (fire and forget)
+void postToBackend(String endpoint, String params) {
+  Thread t = new Thread(() -> {
+    try {
+      URL url = new URL("http://localhost:8080/api/game/" + endpoint
+                        + (params != null ? "?" + params : ""));
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("POST");
+      conn.setConnectTimeout(500); // don't freeze the game if backend is down
+      conn.getResponseCode();      // fire the request
+      conn.disconnect();
+    } catch (Exception e) {
+      // Backend not running — game still works, just no DB persistence
+      println("[Backend] offline: " + endpoint);
+    }
+  });
+  t.setDaemon(true);
+  t.start();
+}
 
 // Global Game State Variables
 Tank tank1, tank2;
@@ -96,6 +118,8 @@ color UI_BG_COLOR; // Removed static final, will be initialized in setup()
 color UI_TEXT_COLOR; // Removed static final, will be initialized in setup()
 static final int UI_PADDING = 20;
 
+
+boolean hackChallengeUsed = false;
 
 void setup() {
   size(1000, 600); // Total window size
@@ -320,6 +344,7 @@ void drawCountdown() {
     text("GO!", width/2, height/2);
   } else {
     gameState = "playing"; // Transition to playing state
+    postToBackend("start", null);
   }
 }
 
@@ -664,6 +689,15 @@ void gameOver(String message) {
   if (!gameState.equals("game_over")) {
     gameState = "game_over";
     winnerMessage = message;
+    
+    String winner = winnerMessage.contains("1") ? "Player+1" : "Player+2";
+    String loser  = winnerMessage.contains("1") ? "Player+2" : "Player+1";
+    postToBackend("result",
+        "winnerName=" + winner +
+        "&loserName=" + loser +
+        "&damageDealt=100" +
+        "&terrain=" + currentTerrain +
+        "&usedHack=" + hackChallengeUsed);
     println("GAME OVER! " + winnerMessage); // Debugging
   }
 }

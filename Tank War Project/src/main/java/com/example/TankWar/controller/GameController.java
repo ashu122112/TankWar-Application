@@ -2,16 +2,12 @@ package com.example.TankWar.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import com.example.TankWar.Model.GameResult;
 import com.example.TankWar.Model.Tank;
 import com.example.TankWar.Model.Terrain;
 import com.example.TankWar.Model.Weapon;
@@ -20,70 +16,152 @@ import com.example.TankWar.Service.GameService;
 @RestController
 @RequestMapping("/api/game")
 public class GameController {
-	@Autowired
+
+    @Autowired
     private GameService gameService;
 
-    
+    // ── GAME LIFECYCLE ─────────────────────────────────────────────────────────
+
+    /** POST /api/game/start — seeds two tanks, clears old projectiles */
     @PostMapping("/start")
-    public String startNewGame() {
+    public ResponseEntity<String> startNewGame() {
         gameService.startNewGame();
-        return "New game started!";
+        return ResponseEntity.ok("New game started — tanks seeded in DB.");
     }
 
-    
+    // ── TANKS ──────────────────────────────────────────────────────────────────
+
+    /** GET /api/game/tanks — returns all tanks and their current state */
     @GetMapping("/tanks")
-    public List<Tank> getAllTanks() {
-        return gameService.getAllTanks();
+    public ResponseEntity<List<Tank>> getAllTanks() {
+        return ResponseEntity.ok(gameService.getAllTanks());
     }
 
-    
+    // ── COMBAT ────────────────────────────────────────────────────────────────
+
+    /**
+     * POST /api/game/tanks/{tankId}/fire?angle=45&power=80
+     * Records a fired projectile with real angle, power, and weapon type.
+     */
     @PostMapping("/tanks/{tankId}/fire")
-    public String fireProjectile(@PathVariable int tankId, @RequestParam double angle, @RequestParam double power) {
-        gameService.fireProjectile(tankId, angle, power);
-        return "Projectile fired!";
-    }
+    public ResponseEntity<String> fireProjectile(
+            @PathVariable int tankId,
+            @RequestParam double angle,
+            @RequestParam double power) {
 
-    
-    @PostMapping("/tanks/{tankId}/damage")
-    public String applyDamage(@PathVariable int tankId, @RequestParam int damage) {
-        gameService.applyDamage(tankId, damage);
-        return "Damage applied to tank " + tankId;
-    }
-
-    
-    @GetMapping("/status")
-    public String checkGameStatus() {
-        if (gameService.isGameOver()) {
-            return "Game Over!";
+        if (angle < 0 || angle > 360) {
+            return ResponseEntity.badRequest().body("Angle must be between 0 and 360.");
         }
-        return "Game is ongoing!";
+        if (power < 0 || power > 100) {
+            return ResponseEntity.badRequest().body("Power must be between 0 and 100.");
+        }
+
+        gameService.fireProjectile(tankId, angle, power);
+        return ResponseEntity.ok("Projectile fired by tank " + tankId);
     }
 
-    
+    /**
+     * POST /api/game/tanks/{tankId}/damage?damage=25
+     * Applies damage and saves updated health to DB.
+     */
+    @PostMapping("/tanks/{tankId}/damage")
+    public ResponseEntity<String> applyDamage(
+            @PathVariable int tankId,
+            @RequestParam int damage) {
+
+        if (damage < 0) {
+            return ResponseEntity.badRequest().body("Damage cannot be negative.");
+        }
+
+        gameService.applyDamage(tankId, damage);
+        return ResponseEntity.ok("Damage " + damage + " applied to tank " + tankId);
+    }
+
+    /** GET /api/game/status — returns whether the game is over */
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> checkGameStatus() {
+        boolean over = gameService.isGameOver();
+        return ResponseEntity.ok(Map.of(
+                "gameOver", over,
+                "message", over ? "Game Over!" : "Game is ongoing."));
+    }
+
+    // ── LEADERBOARD ───────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/game/leaderboard — all match results sorted by damage dealt.
+     * Powered by the new GameResult entity.
+     */
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<GameResult>> getLeaderboard() {
+        return ResponseEntity.ok(gameService.getLeaderboard());
+    }
+
+    /**
+     * POST /api/game/result
+     * Called from GameSketch when game_over state is reached.
+     * Body params: winnerName, loserName, damageDealt, terrain, usedHack
+     */
+    @PostMapping("/result")
+    public ResponseEntity<GameResult> saveResult(
+            @RequestParam String winnerName,
+            @RequestParam String loserName,
+            @RequestParam int damageDealt,
+            @RequestParam String terrain,
+            @RequestParam(defaultValue = "false") boolean usedHack) {
+
+        GameResult result = gameService.saveGameResult(
+                winnerName, loserName, damageDealt, terrain, usedHack);
+        return ResponseEntity.ok(result);
+    }
+
+    // ── TERRAIN & WEAPON ──────────────────────────────────────────────────────
+
+    /** GET /api/game/terrain?type=grassland */
     @GetMapping("/terrain")
-    public Terrain getTerrain(@RequestParam String type) {
-        return gameService.getTerrainByType(type);
+    public ResponseEntity<Terrain> getTerrain(@RequestParam String type) {
+        return ResponseEntity.ok(gameService.getTerrainByType(type));
     }
 
-   
+    /** GET /api/game/weapon?type=missile */
     @GetMapping("/weapon")
-    public Weapon chooseWeapon(@RequestParam String type) {
-        return gameService.chooseWeapon(type);
+    public ResponseEntity<Weapon> chooseWeapon(@RequestParam String type) {
+        return ResponseEntity.ok(gameService.chooseWeapon(type));
     }
 
+    // ── HACK CHALLENGES ───────────────────────────────────────────────────────
+
+    /**
+     * GET /api/game/challenge/random
+     * Returns a random challenge's title, description, hint, reward.
+     * The correct answer is NEVER returned here — only verifyAnswer() checks it.
+     */
     @GetMapping("/challenge/random")
-    public GameService.HackChallenge getRandomChallenge() {
-        return gameService.getRandomChallenge();
+    public ResponseEntity<Map<String, Object>> getRandomChallenge() {
+        GameService.HackChallenge c = gameService.getRandomChallenge();
+        return ResponseEntity.ok(Map.of(
+                "index", c.index,
+                "title", c.title,
+                "description", c.description,
+                "hint", c.hint,
+                "reward", c.reward));
     }
 
+    /**
+     * POST /api/game/challenge/verify?index=0&answer=admin'--
+     * Returns correct true/false + reward name if correct.
+     * Answer is compared server-side only — never exposed to client.
+     */
     @PostMapping("/challenge/verify")
-    public Map<String, Object> verifyChallenge(
+    public ResponseEntity<Map<String, Object>> verifyChallenge(
             @RequestParam int index,
             @RequestParam String answer) {
+
         boolean correct = gameService.verifyAnswer(index, answer);
-        Map<String, Object> result = new HashMap<>();
-        result.put("correct", correct);
-        result.put("reward", correct ? gameService.getChallengeReward(index) : null);
-        return result;
+        String reward = correct ? gameService.getChallengeReward(index) : null;
+
+        return ResponseEntity.ok(Map.of(
+                "correct", correct,
+                "reward", reward != null ? reward : "none"));
     }
 }

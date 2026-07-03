@@ -2,25 +2,14 @@ package com.example.TankWar;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-
-import com.example.TankWar.Service.GameService;
-import com.example.TankWar.ui.GameSketch;
-
-import processing.core.PApplet;
 
 @SpringBootApplication
 public class TankGameApplication {
 
 	public static void main(String[] args) {
-		System.setProperty("java.awt.headless", "false");
+		// Starts Spring Boot REST API on localhost:8080
+		// The Processing sketch (.pde files) runs separately in Processing IDE
+		// and communicates with this backend via HTTP calls to /api/game/...
 		SpringApplication.run(TankGameApplication.class, args);
-		
-		 
 	}
-//	@Bean
-//    public PApplet mainSketch(GameService gameService) {
-//        return new GameSketch(gameService);
-//    }
-
 }

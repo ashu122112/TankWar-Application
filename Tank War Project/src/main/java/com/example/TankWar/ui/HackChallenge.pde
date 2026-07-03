@@ -179,6 +179,7 @@ void checkHackAnswer() {
 
 // ── APPLY THE REWARD TO THE WINNING TANK ────────────────────────────────────
 void applyHackReward(Tank t, String reward) {
+  hackChallengeUsed = true;
   powerupSound.trigger();
   switch(reward) {
     case "missile_burst":
