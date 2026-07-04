@@ -9,6 +9,7 @@ class PowerUp {
   color cGlow;
   int spawnTime;
 
+
   PowerUp(float x, float y, String type) {
     this.x = x;
     this.y = y;
