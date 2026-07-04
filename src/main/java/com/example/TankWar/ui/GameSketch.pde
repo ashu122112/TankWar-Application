@@ -10,7 +10,6 @@ ArrayList<PowerUp>    powerUps    = new ArrayList<PowerUp>();
 ArrayList<Particle>   particles   = new ArrayList<Particle>();
 ArrayList<Timer>      timers      = new ArrayList<Timer>();
 // game will start
-
 // ─── GAME STATE ───────────────────────────────────────────────────────────────
 String  gameState    = "mode_selection";
 boolean isVsComputer = false;
