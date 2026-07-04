@@ -9,6 +9,7 @@ ArrayList<Barrier>    barriers    = new ArrayList<Barrier>();
 ArrayList<PowerUp>    powerUps    = new ArrayList<PowerUp>();
 ArrayList<Particle>   particles   = new ArrayList<Particle>();
 ArrayList<Timer>      timers      = new ArrayList<Timer>();
+// game will start
 
 // ─── GAME STATE ───────────────────────────────────────────────────────────────
 String  gameState    = "mode_selection";
@@ -1075,6 +1076,7 @@ void generateMap(String terrainType) {
         barrierStandardWidth * 2, barrierStandardHeight, currentBarrierHealth, currentBarrierImg, 0));
       break;
   }
+
 
   // Spawn tanks after map is ready
   tank1 = new Tank(0, 0, color(255,0,0), true,  tank1Img, false);
