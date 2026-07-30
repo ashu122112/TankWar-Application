@@ -1,22 +1,23 @@
-package com.example.TankWar.Service;
+package com.example.tankwar.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.TankWar.Model.GameResult;
-import com.example.TankWar.Model.Projectile;
-import com.example.TankWar.Model.Tank;
-import com.example.TankWar.Model.Terrain;
-import com.example.TankWar.Model.Weapon;
-import com.example.TankWar.repository.GameResultRepository;
-import com.example.TankWar.repository.ProjectileRepository;
-import com.example.TankWar.repository.TankRepository;
-import com.example.TankWar.repository.TerrainRepository;
-import com.example.TankWar.repository.WeaponRepository;
+import com.example.tankwar.model.GameResult;
+import com.example.tankwar.model.Projectile;
+import com.example.tankwar.model.Tank;
+import com.example.tankwar.model.Terrain;
+import com.example.tankwar.model.Weapon;
+import com.example.tankwar.repository.GameResultRepository;
+import com.example.tankwar.repository.ProjectileRepository;
+import com.example.tankwar.repository.TankRepository;
+import com.example.tankwar.repository.TerrainRepository;
+import com.example.tankwar.repository.WeaponRepository;
 
 @Service
 public class GameService {
@@ -33,9 +34,9 @@ public class GameService {
 	private GameResultRepository gameResultRepository;
 
 	// ── TURN TRACKING ──────────────────────────────────────────────────────────
-	// volatile ensures visibility across threads (Processing runs on its own
-	// thread)
-	private volatile int currentTankIndex = 0;
+	// AtomicInteger provides thread-safe access without the volatile keyword,
+	// which PMD flags as error-prone.
+	private final AtomicInteger currentTankIndex = new AtomicInteger(0);
 
 	// ── HACK CHALLENGE BANK ────────────────────────────────────────────────────
 	// Hardcoded here so no extra DB table is needed.
@@ -109,7 +110,7 @@ public class GameService {
 		Tank tank2 = new Tank(0, 100, 600.0, 300.0, 180.0, 50.0, "bullet");
 		tankRepository.saveAll(List.of(tank1, tank2));
 
-		currentTankIndex = 0;
+		currentTankIndex.set(0);
 	}
 
 	// ── TANKS ──────────────────────────────────────────────────────────────────
@@ -123,9 +124,8 @@ public class GameService {
 		if (tanks.isEmpty()) {
 			throw new IllegalStateException("No tanks in game. Call /api/game/start first.");
 		}
-		Tank current = tanks.get(currentTankIndex % tanks.size());
-		currentTankIndex = (currentTankIndex + 1) % tanks.size();
-		return current;
+		int idx = currentTankIndex.getAndUpdate(i -> (i + 1) % tanks.size());
+		return tanks.get(idx % tanks.size());
 	}
 
 	// ── COMBAT ────────────────────────────────────────────────────────────────

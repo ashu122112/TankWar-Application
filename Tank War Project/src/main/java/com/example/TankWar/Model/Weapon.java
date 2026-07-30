@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,8 +19,10 @@ public class Weapon {
     private double range;         
     private double weight;        
 
-    
-    public Weapon() {}
+    /** Default constructor required by JPA. */
+    public Weapon() {
+        // default constructor for JPA
+    }
 
     public Weapon(String type, int damage, double range, double weight) {
         this.type = type;

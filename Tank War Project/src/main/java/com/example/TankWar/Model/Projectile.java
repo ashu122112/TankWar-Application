@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,8 +30,10 @@ public class Projectile {
     private double positionY;       
     private boolean isActive;       
 
-    
-    public Projectile() {}
+    /** Default constructor required by JPA. */
+    public Projectile() {
+        // default constructor for JPA
+    }
 
     public Projectile(double angle, double power, String type) {
         this.angle = angle;

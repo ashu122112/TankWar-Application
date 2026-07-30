@@ -1,7 +1,7 @@
-package com.example.TankWar;  // FIXED: was com.example.ashutosh.watchlist (wrong project copy-paste)
+package com.example.tankwar;
 
-import com.example.TankWar.Model.Tank;
-import com.example.TankWar.Service.GameService;
+import com.example.tankwar.model.Tank;
+import com.example.tankwar.service.GameService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

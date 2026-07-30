@@ -1,10 +1,14 @@
-package com.example.TankWar;
+package com.example.tankwar;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TankGameApplication {
+public final class TankGameApplication {
+
+	/** Prevent instantiation — entry point class with only static methods. */
+	private TankGameApplication() {
+	}
 
 	public static void main(String[] args) {
 		// Starts Spring Boot REST API on localhost:8080

@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,8 +19,10 @@ public class Tank {
     private double power;          
     private String weaponType;     
 
-    
-    public Tank() {}
+    /** Default constructor required by JPA. */
+    public Tank() {
+        // default constructor for JPA
+    }
 
     public Tank(int playerId, int health, double positionX, double positionY, double angle, double power, String weaponType) {
         this.playerId = playerId;

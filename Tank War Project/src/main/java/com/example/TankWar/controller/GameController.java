@@ -1,4 +1,4 @@
-package com.example.TankWar.controller;
+package com.example.tankwar.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -7,11 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.TankWar.Model.GameResult;
-import com.example.TankWar.Model.Tank;
-import com.example.TankWar.Model.Terrain;
-import com.example.TankWar.Model.Weapon;
-import com.example.TankWar.Service.GameService;
+import com.example.tankwar.model.GameResult;
+import com.example.tankwar.model.Tank;
+import com.example.tankwar.model.Terrain;
+import com.example.tankwar.model.Weapon;
+import com.example.tankwar.service.GameService;
 
 @RestController
 @RequestMapping("/api/game")

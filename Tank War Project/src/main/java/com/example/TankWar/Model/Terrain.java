@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,8 +30,10 @@ public class Terrain {
 	    private double gravityModifier;   
 	    private boolean hasObstacles;     
 
-	    
-	    public Terrain() {}
+	    /** Default constructor required by JPA. */
+	    public Terrain() {
+	        // default constructor for JPA
+	    }
 
 	    public Terrain(String type, double friction, double gravityModifier, boolean hasObstacles) {
 	        this.type = type;

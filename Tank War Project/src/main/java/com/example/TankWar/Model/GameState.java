@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import java.util.List;
 
@@ -18,8 +18,10 @@ public class GameState {
     private boolean gameOver;           
     private String winner;              
 
-    
-    public GameState() {}
+    /** Default constructor required for serialization frameworks. */
+    public GameState() {
+        // default constructor for serialization
+    }
 
     public GameState(int currentPlayerTurn, List<Tank> tanks, String terrainType, boolean gameOver, String winner) {
         this.currentPlayerTurn = currentPlayerTurn;

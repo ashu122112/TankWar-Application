@@ -1,6 +1,6 @@
-package com.example.TankWar.repository;
+package com.example.tankwar.repository;
 
-import com.example.TankWar.Model.GameResult;
+import com.example.tankwar.model.GameResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

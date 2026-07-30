@@ -1,4 +1,4 @@
-package com.example.TankWar.exception;
+package com.example.tankwar.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

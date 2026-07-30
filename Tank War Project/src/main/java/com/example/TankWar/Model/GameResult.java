@@ -1,4 +1,4 @@
-package com.example.TankWar.Model;
+package com.example.tankwar.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,9 +28,6 @@ public class GameResult {
     private String terrainType;
     private boolean cybersecurityChallengeUsed; // true if hack terminal was solved
     private LocalDateTime playedAt;
-
-    public GameResult() {
-    }
 
     // Getters & Setters
 
